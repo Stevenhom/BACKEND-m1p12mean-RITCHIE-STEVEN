@@ -4,41 +4,40 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middlewares/authMiddleware');
+const multer = require('multer');
+const upload = multer();
 
 // Inscription
 
-router.post('/register', async (req, res) => {
+router.post('/client', upload.single('picture'), async (req, res) => {
     try {
-        const { firstName, lastName, phoneNumber, email, password, picture } = req.body;
+        const { firstName, lastName, phoneNumber, email, password } = req.body;
+        const picture = req.file;
 
-        // Vérifier si l'email ou le numéro de téléphone est déjà utilisé
-        let user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
-        if (user) {
-            return res.status(400).json({ message: 'Email ou numéro déjà utilisé' });
+        if (!password) {
+            return res.status(400).json({ message: 'Password is required' });
         }
 
-        // Hasher le mot de passe
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Créer un nouvel utilisateur (type 1 = client)
-        user = new User({
+        const user = new User({
             firstName,
             lastName,
             phoneNumber,
             email,
             password: hashedPassword,
-            picture: picture || null, // L'image est facultative
+            picture: picture ? picture.buffer : null,
             type: 1
         });
 
         await user.save();
-
-        res.status(201).json({ message: 'Utilisateur créé avec succès', user });
+        res.status(201).json({ message: 'User created successfully', user });
     } catch (error) {
-        console.error('Erreur lors de l\'inscription:', error);
-        res.status(500).json({ message: 'Erreur serveur' });
+        console.error('Erreur :', error);
+        res.status(500).json({ message: 'Server error' });
     }
 });
+
 
 
 router.post('/login', async (req, res) => {
