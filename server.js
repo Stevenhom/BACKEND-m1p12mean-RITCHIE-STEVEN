@@ -29,7 +29,6 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // Définir une route de test
 app.use('/auth', require('./routes/authRoutes'));
-app.use('/protected', require('./routes/protectedRoutes'));
 
 // Démarrer le serveur
 app.listen(PORT, () => {

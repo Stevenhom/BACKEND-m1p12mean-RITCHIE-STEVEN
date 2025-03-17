@@ -6,26 +6,40 @@ const User = require('../models/User');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 // Inscription
+
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, type } = req.body;
+        const { firstName, lastName, phoneNumber, email, password, picture } = req.body;
 
-        // Vérifier si l'utilisateur existe déjà
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: 'Email déjà utilisé' });
+        // Vérifier si l'email ou le numéro de téléphone est déjà utilisé
+        let user = await User.findOne({ $or: [{ email }, { phoneNumber }] });
+        if (user) {
+            return res.status(400).json({ message: 'Email ou numéro déjà utilisé' });
+        }
 
         // Hasher le mot de passe
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Créer un nouvel utilisateur
-        user = new User({ email, password: hashedPassword, type });
+        // Créer un nouvel utilisateur (type 1 = client)
+        user = new User({
+            firstName,
+            lastName,
+            phoneNumber,
+            email,
+            password: hashedPassword,
+            picture: picture || null, // L'image est facultative
+            type: 1
+        });
+
         await user.save();
 
-        res.status(201).json({ message: 'Utilisateur créé avec succès' });
+        res.status(201).json({ message: 'Utilisateur créé avec succès', user });
     } catch (error) {
+        console.error('Erreur lors de l\'inscription:', error);
         res.status(500).json({ message: 'Erreur serveur' });
     }
 });
+
 
 router.post('/login', async (req, res) => {
     try {
