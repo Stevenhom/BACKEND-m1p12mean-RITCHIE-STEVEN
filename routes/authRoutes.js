@@ -121,7 +121,7 @@ router.get("/mecanicien", authMiddleware([2]), (req, res) => {
 });
 
 // Route protégée pour le client
-router.get("/client", authMiddleware([1]), async (req, res) => {
+router.get("/client", authMiddleware([2, 3]), async (req, res) => {
     const path = require("path");
     const fs = require("fs");
   
