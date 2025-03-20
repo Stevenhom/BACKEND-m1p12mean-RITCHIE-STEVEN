@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Vehicle = require('../models/Vehicle');
+const authMiddleware = require("../middlewares/authMiddleware");
 
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const newVehicle = new Vehicle(req.body);
         const savedVehicle = await newVehicle.save();
@@ -12,7 +13,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const vehicles = await Vehicle.find().populate('clientId').populate('brandId');;
         res.status(200).json(vehicles);
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const vehicle = await Vehicle.findById(req.params.id).populate('clientId');
         if (!vehicle) {
@@ -33,7 +34,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const updatedVehicle = await Vehicle.findByIdAndUpdate(
             req.params.id,
@@ -49,7 +50,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const deletedVehicle = await Vehicle.findByIdAndDelete(req.params.id);
         if (!deletedVehicle) {
@@ -61,12 +62,12 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-router.get('/client/:clientId', async (req, res) => {
+router.get('/client/:clientId', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const vehicles = await Vehicle.find({ clientId: req.params.clientId })
             .populate('clientId')
             .populate('brandId');
-            
+
         res.status(200).json(vehicles);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching vehicles by clientId', error: error.message });

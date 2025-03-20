@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const Brand = require('../models/Brand');
+const authMiddleware = require("../middlewares/authMiddleware");
 
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const newBrand = new Brand({
             brand: req.body.brand,
@@ -14,7 +15,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const brands = await Brand.find();
         res.status(200).json(brands);
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const brand = await Brand.findById(req.params.id);
         if (!brand) {
@@ -35,7 +36,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const updatedBrand = await Brand.findByIdAndUpdate(
             req.params.id,
@@ -51,7 +52,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const deletedBrand = await Brand.findByIdAndDelete(req.params.id);
         if (!deletedBrand) {
