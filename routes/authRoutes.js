@@ -122,35 +122,41 @@ router.get("/mecanicien", authMiddleware([2]), (req, res) => {
 
 // Route protégée pour le client
 router.get("/client", authMiddleware([2, 3]), async (req, res) => {
-    const path = require("path");
-    const fs = require("fs");
-  
-    try {
-      const users = await User.find({ type: 1 });
-  
-      const updatedUsers = users.map(user => {
-        const userObject = user.toObject();
-  
-        if (user.picture) {
-            const picturePath = path.join(__dirname, '..', user.picture);
-          try {
-            userObject.picture = fs.readFileSync(picturePath, { encoding: "base64" });
-          } catch (err) {
-            console.error(`Erreur lors du chargement de l'image pour ${user._id}:`, err.message);
-            userObject.picture = null;
-          }
-        } else {
+  const path = require("path");
+  const fs = require("fs");
+
+  try {
+    const users = await User.find({ type: 1 });
+
+    const updatedUsers = users.map((user) => {
+      const userObject = user.toObject();
+
+      if (user.picture) {
+        const picturePath = path.join(__dirname, "..", user.picture);
+        try {
+          userObject.picture = fs.readFileSync(picturePath, {
+            encoding: "base64",
+          });
+        } catch (err) {
+          console.error(
+            `Erreur lors du chargement de l'image pour ${user._id}:`,
+            err.message
+          );
           userObject.picture = null;
         }
-  
-        return userObject;
-      });
-  
-      res.status(200).json(updatedUsers);
-    } catch (error) {
-      res.status(500).json({ message: "Erreur serveur lors de la récupération des utilisateurs." });
-    }
-  });
-  
+      } else {
+        userObject.picture = null;
+      }
+
+      return userObject;
+    });
+
+    res.status(200).json(updatedUsers);
+  } catch (error) {
+    res.status(500).json({
+      message: "Erreur serveur lors de la récupération des utilisateurs.",
+    });
+  }
+});
 
 module.exports = router;
