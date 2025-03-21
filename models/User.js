@@ -7,8 +7,9 @@ const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    picture: { type: String, default: null }, // Lien vers l’image, optionnel
-    type: { type: Number, enum: [1, 2, 3], required: true }
+    picture: { type: String, default: null },
+    type: { type: Number, enum: [1, 2, 3], required: true },
+    salary: { type: Number, default: 0 }
 },  { timestamps: true });
 
 
