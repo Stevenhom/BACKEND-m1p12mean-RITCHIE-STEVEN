@@ -315,5 +315,90 @@ router.put("/mechanic/:id", authMiddleware([3]), upload.single("picture"), async
     }
   });
   
+  router.get("/user/:id", authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const userObject = user.toObject();
+        if (user.picture) {
+            const picturePath = path.join(__dirname, "..", user.picture);
+            try {
+                userObject.picture = fs.readFileSync(picturePath, { encoding: "base64" });
+            } catch (err) {
+                console.error(`Error loading picture for user ${user._id}: ${err.message}`);
+                userObject.picture = null;
+            }
+        } else {
+            userObject.picture = null;
+        }
+
+        res.status(200).json(userObject);
+    } catch (error) {
+        console.error(`Error fetching user by ID: ${error.message}`);
+        res.status(500).json({ message: "Server error while fetching user" });
+    }
+});
+
+
+router.put("/user/:id", authMiddleware([1, 2, 3]), upload.single("picture"), async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const { id } = req.params;
+        const { firstName, lastName, phoneNumber, email, salary, type, password } = req.body;
+
+        let user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (firstName) user.firstName = firstName;
+        if (lastName) user.lastName = lastName;
+        if (phoneNumber) user.phoneNumber = phoneNumber;
+        if (email) user.email = email;
+        if (salary) user.salary = Number(salary);
+        if (type) user.type = Number(type);
+
+        if (password) {
+            if (typeof password !== "string") {
+                return res.status(400).json({ message: "Invalid password format" });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+        }
+
+        if (req.file) {
+            const extension = path.extname(req.file.originalname);
+            const newFileName = `${user._id}${extension}`;
+            const oldPath = req.file.path;
+            const newPath = path.join(uploadPath, newFileName);
+
+            fs.renameSync(oldPath, newPath);
+            user.picture = `assets/pictures/${newFileName}`;
+        }
+
+        await user.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(200).json({ message: "User updated successfully", user });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+
+        console.error(`Error updating user: ${error.message}`);
+        res.status(500).json({ message: "Server error while updating user" });
+    }
+});
+
+
 
 module.exports = router;
