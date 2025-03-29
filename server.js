@@ -33,6 +33,7 @@ app.use('/brand', require('./routes/brandRoutes'));
 app.use('/vehicle', require('./routes/vehicleRoutes'));
 app.use('/reparation', require('./routes/reparationRoutes'));
 app.use('/fleet', require('./routes/fleetRoutes'));
+app.use('/deposit', require('./routes/depositRoutes'));
 app.use('/expense', require('./routes/expenseRoutes'));
 // Démarrer le serveur
 app.listen(PORT, () => {
