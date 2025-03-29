@@ -3,28 +3,37 @@ const router = express.Router();
 const Deposit = require('../models/Deposit');
 const authMiddleware = require("../middlewares/authMiddleware");
 
-router.post('/', authMiddleware([1,2,3]), async (req, res) => {
+router.post('/', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
         const newDeposit = new Deposit(req.body);
         const savedDeposit = await newDeposit.save();
 
         const populatedDeposit = await Deposit.findById(savedDeposit._id)
-            .populate('vehicleId')
-            .populate('typeReparationIds')
-            .populate('clientId');
-        
+            .populate({
+                path: 'vehicleId',
+                populate: {
+                    path: 'clientId'
+                }
+            })
+            .populate('typeReparationIds');
+
         res.status(201).json(populatedDeposit);
     } catch (error) {
         res.status(500).json({ message: 'Error creating deposit', error: error.message });
     }
 });
 
-router.get('/', authMiddleware([1,2,3]), async (req, res) => {
+router.get('/', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
         const deposits = await Deposit.find()
-            .populate('vehicleId')
-            .populate('typeReparationIds')
-            .populate('clientId');
+            .populate({
+                path: 'vehicleId',
+                populate: {
+                    path: 'clientId'
+                }
+            })
+            .populate('typeReparationIds');
+
         res.status(200).json(deposits);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching deposits', error: error.message });
@@ -34,9 +43,13 @@ router.get('/', authMiddleware([1,2,3]), async (req, res) => {
 router.get('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const deposit = await Deposit.findById(req.params.id)
-            .populate('vehicleId')
-            .populate('typeReparationIds')
-            .populate('clientId');
+        .populate({
+            path: 'vehicleId',
+            populate: {
+                path: 'clientId'
+            }
+        })
+        .populate('typeReparationIds');
         
         if (!deposit) {
             return res.status(404).json({ message: 'Deposit not found' });
@@ -53,9 +66,13 @@ router.put('/:id', authMiddleware([1,2,3]), async (req, res) => {
             req.params.id,
             req.body,
             { new: true, runValidators: true }
-        ).populate('vehicleId')
-         .populate('typeReparationIds')
-         .populate('clientId');
+        ).populate({
+            path: 'vehicleId',
+            populate: {
+                path: 'clientId'
+            }
+        })
+        .populate('typeReparationIds');
         
         if (!updatedDeposit) {
             return res.status(404).json({ message: 'Deposit not found' });
@@ -79,14 +96,19 @@ router.delete('/:id', authMiddleware([1,2,3]), async (req, res) => {
 });
 
 
-router.get('/client/:clientId', authMiddleware([1,2,3]), async (req, res) => {
+router.get('/client/:clientId', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
-        const deposits = await Deposit.find({ clientId: req.params.clientId })
-            .populate('vehicleId')
-            .populate('typeReparationIds')
-            .populate('clientId');
+        const deposits = await Deposit.find()
+            .populate({
+                path: 'vehicleId',
+                match: { clientId: req.params.clientId },
+                populate: {
+                    path: 'clientId'
+                }
+            })
+            .populate('typeReparationIds');
 
-        res.status(200).json(deposits);
+        res.status(200).json(deposits.filter(deposit => deposit.vehicleId));
     } catch (error) {
         res.status(500).json({ message: 'Error fetching deposits by clientId', error: error.message });
     }
