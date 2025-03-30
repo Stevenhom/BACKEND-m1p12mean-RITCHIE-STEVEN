@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Deposit = require('../models/Deposit');
+const Reparation = require('../models/Reparation');
 const authMiddleware = require("../middlewares/authMiddleware");
 
 router.post('/', authMiddleware([1, 2, 3]), async (req, res) => {
@@ -40,6 +41,23 @@ router.get('/', authMiddleware([1, 2, 3]), async (req, res) => {
     }
 });
 
+router.get('/unassigned', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const assignedReparations = await Reparation.find().distinct('depositId');
+        const unassignedDeposits = await Deposit.find({ _id: { $nin: assignedReparations } })
+            .populate({
+                path: 'vehicleId',
+                populate: {
+                    path: 'clientId'
+                }
+            })
+            .populate('typeReparationIds');
+
+        res.status(200).json(unassignedDeposits);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching unassigned deposits', error: error.message });
+    }
+});
 router.get('/:id', authMiddleware([1,2,3]), async (req, res) => {
     try {
         const deposit = await Deposit.findById(req.params.id)
@@ -98,7 +116,8 @@ router.delete('/:id', authMiddleware([1,2,3]), async (req, res) => {
 
 router.get('/client/:clientId', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
-        const deposits = await Deposit.find()
+        const assignedReparations = await Reparation.find().distinct('depositId');
+        const deposits = await Deposit.find({ _id: { $nin: assignedReparations } })
             .populate({
                 path: 'vehicleId',
                 match: { clientId: req.params.clientId },
@@ -108,9 +127,11 @@ router.get('/client/:clientId', authMiddleware([1, 2, 3]), async (req, res) => {
             })
             .populate('typeReparationIds');
 
-        res.status(200).json(deposits.filter(deposit => deposit.vehicleId));
+        const unassignedDeposits = deposits.filter(deposit => deposit.vehicleId);
+
+        res.status(200).json(unassignedDeposits);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching deposits by clientId', error: error.message });
+        res.status(500).json({ message: 'Error fetching unassigned deposits by clientId', error: error.message });
     }
 });
 

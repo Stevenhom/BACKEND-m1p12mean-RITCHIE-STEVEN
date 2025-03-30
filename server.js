@@ -31,10 +31,11 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/brand', require('./routes/brandRoutes'));
 app.use('/vehicle', require('./routes/vehicleRoutes'));
-app.use('/reparation', require('./routes/reparationRoutes'));
+app.use('/reparationType', require('./routes/reparationTypeRoutes'));
 app.use('/fleet', require('./routes/fleetRoutes'));
 app.use('/deposit', require('./routes/depositRoutes'));
 app.use('/expense', require('./routes/expenseRoutes'));
+app.use('/reparation', require('./routes/reparationRoutes'));
 // Démarrer le serveur
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port http://localhost:${PORT}`);

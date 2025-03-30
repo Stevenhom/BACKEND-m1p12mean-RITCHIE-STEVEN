@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Reparation = require('../models/Reparation');
 const authMiddleware = require("../middlewares/authMiddleware");
 const { upload, uploadPath } = require("../middlewares/multerMiddleware");
 const fs = require("fs");
@@ -399,6 +400,19 @@ router.put("/user/:id", authMiddleware([1, 2, 3]), upload.single("picture"), asy
     }
 });
 
+router.get('/mechanic/available-mechanics', authMiddleware([1, 2, 3]), async (req, res) => {
+  try {
+      const mechanicsInService = await Reparation.find({ status: 'in_progress' }).distinct('mechanics');
+      const availableMechanics = await User.find({ 
+          type: 2, 
+          _id: { $nin: mechanicsInService } 
+      });
 
+      res.status(200).json(availableMechanics);
+  } catch (error) {
+    console.log(error.message)
+      res.status(500).json({ message: 'Error fetching available mechanics', error: error.message });
+  }
+});
 
 module.exports = router;

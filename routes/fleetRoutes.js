@@ -7,10 +7,16 @@ router.get('/', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
         const fleets = await Fleet.find()
             .populate({
-                path: 'vehicleId',
+                path: 'reparationId',
                 populate: {
-                    path: 'clientId',
-                    select: 'firstName lastName',
+                    path: 'depositId',
+                    populate: {
+                        path: 'vehicleId',
+                        populate: {
+                            path: 'clientId',
+                            select: 'firstName lastName',
+                        },
+                    },
                 },
             });
 
@@ -21,19 +27,41 @@ router.get('/', authMiddleware([1, 2, 3]), async (req, res) => {
     }
 });
 
+router.get('/available', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const availableFleets = await Fleet.find({ reparationId: null })
+            .populate({
+                path: 'reparationId',
+                populate: {
+                    path: 'depositId',
+                    populate: {
+                        path: 'vehicleId',
+                        populate: {
+                            path: 'clientId',
+                            select: 'firstName lastName',
+                        },
+                    },
+                },
+            });
 
+        res.status(200).json(availableFleets);
+    } catch (error) {
+        console.error(`Error fetching available fleets: ${error.message}`);
+        res.status(500).json({ message: 'Server error while fetching available fleets', error: error.message });
+    }
+});
 
 router.put('/:id', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
-        const { vehicleId } = req.body;
-        const updateData = { vehicleId: vehicleId || null };
+        const { reparationId } = req.body;
+        const updateData = { reparationId: reparationId || null };
 
         const updatedFleet = await Fleet.findByIdAndUpdate(req.params.id, updateData, {
             new: true,
             runValidators: true,
         });
 
-        if (!updatedParc) {
+        if (!updatedFleet) {
             return res.status(404).json({ message: 'Fleet entry not found' });
         }
 
@@ -44,18 +72,17 @@ router.put('/:id', authMiddleware([1, 2, 3]), async (req, res) => {
     }
 });
 
-router.get('/clear-vehicles', authMiddleware([1, 2, 3]), async (req, res) => {
+router.get('/clear-reparations', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
-        const result = await Fleet.updateMany({}, { vehicleId: null });
+        const result = await Fleet.updateMany({}, { reparationId: null });
         res.status(200).json({
-            message: `All vehicleId fields have been set to null.`,
-            modifiedCount: result.nModified
+            message: `All reparationId fields have been set to null.`,
+            modifiedCount: result.modifiedCount,
         });
     } catch (error) {
-        console.error(`Error clearing vehicleIds: ${error.message}`);
-        res.status(500).json({ message: 'Server error while clearing vehicleIds', error: error.message });
+        console.error(`Error clearing reparationIds: ${error.message}`);
+        res.status(500).json({ message: 'Server error while clearing reparationIds', error: error.message });
     }
 });
-
 
 module.exports = router;
