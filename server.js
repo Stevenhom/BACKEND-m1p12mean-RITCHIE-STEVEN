@@ -29,6 +29,8 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // Définir une route de test
 app.use('/auth', require('./routes/authRoutes'));
+app.use('/auth', require('./routes/forgotPasswordRoutes'));
+app.use('/auth', require('./routes/resetPasswordRoutes'));
 app.use('/brand', require('./routes/brandRoutes'));
 app.use('/vehicle', require('./routes/vehicleRoutes'));
 app.use('/reparationType', require('./routes/reparationTypeRoutes'));
