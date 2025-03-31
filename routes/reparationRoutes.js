@@ -32,7 +32,7 @@ router.get('/', authMiddleware([1, 2, 3]), async (req, res) => {
     }
 });
 
-router.put('/:id', authMiddleware([3]), async (req, res) => {
+router.put('/:id', authMiddleware([2, 3]), async (req, res) => {
     try {
         const updatedReparation = await Reparation.findByIdAndUpdate(
             req.params.id,
@@ -182,6 +182,68 @@ router.get('/rejected/:clientId', authMiddleware([1, 2, 3]), async (req, res) =>
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ message: 'Error fetching rejected reparations', error: error.message });
+    }
+});
+
+router.get('/mechanics/:mechanicId', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const { mechanicId } = req.params;
+
+        const reparations = await Reparation.find({
+            mechanics: mechanicId
+        })
+        .populate({
+            path: 'depositId',
+            populate: [
+                {
+                    path: 'vehicleId',
+                    populate: { path: 'clientId' }
+                },
+                {
+                    path: 'typeReparationIds'
+                }
+            ]
+        })
+        .populate('mechanics');
+
+        res.status(200).json(reparations);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching reparations for mechanic', error: error.message });
+    }
+});
+
+router.get('/:id', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const reparation = await Reparation.findById(id)
+            .populate({
+                path: 'depositId',
+                populate: [
+                    {
+                        path: 'vehicleId',
+                        populate: [
+                            { path: 'clientId' },
+                            { path: 'brandId' }  
+                        ]
+
+                    },
+                    {
+                        path: 'typeReparationIds'
+                    }
+                ]
+            })
+            .populate('mechanics');
+
+        if (!reparation) {
+            return res.status(404).json({ message: 'Reparation not found' });
+        }
+
+        res.status(200).json(reparation);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching reparation by ID', error: error.message });
     }
 });
 

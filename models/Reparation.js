@@ -29,8 +29,10 @@ const reparationSchema = new mongoose.Schema(
         },
         additionalCosts: [
             {
+                _id: false,
                 description: { type: String, required: true },
-                cost: { type: Number, required: true }
+                cost: { type: Number, required: true },
+                date: { type: Date, required: true } 
             }
         ],
         mechanics: [
