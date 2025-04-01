@@ -190,7 +190,8 @@ router.get('/mechanics/:mechanicId', authMiddleware([1, 2, 3]), async (req, res)
         const { mechanicId } = req.params;
 
         const reparations = await Reparation.find({
-            mechanics: mechanicId
+            mechanics: mechanicId,
+            status: { $in: ['in_progress', 'completed'] }
         })
         .populate({
             path: 'depositId',
@@ -200,7 +201,7 @@ router.get('/mechanics/:mechanicId', authMiddleware([1, 2, 3]), async (req, res)
                     populate: { path: 'clientId' }
                 },
                 {
-                    path: 'typeReparationIds'
+                    path: 'typeReparationIds' 
                 }
             ]
         })
