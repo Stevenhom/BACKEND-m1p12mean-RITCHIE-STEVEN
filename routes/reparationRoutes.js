@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Reparation = require('../models/Reparation');
 const authMiddleware = require('../middlewares/authMiddleware');
+const mongoose = require("mongoose");
 
 router.post('/', authMiddleware([3]), async (req, res) => {
     try {
@@ -248,4 +249,76 @@ router.get('/:id', authMiddleware([1, 2, 3]), async (req, res) => {
     }
 });
 
+router.get('/status/:status', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const { status } = req.params;
+        const validStatuses = ['pending', 'in_progress', 'completed', 'rejected', 'recovered'];
+        
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status provided' });
+        }
+
+        const reparations = await Reparation.find({ status })
+            .populate({
+                path: 'depositId',
+                populate: [
+                    {
+                        path: 'vehicleId',
+                        populate: { path: 'clientId' }
+                    },
+                    {
+                        path: 'typeReparationIds'
+                    }
+                ]
+            })
+            .populate('mechanics');
+
+        res.status(200).json(reparations);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching reparations by status', error: error.message });
+    }
+});
+
+router.get('/status/:status/client/:clientId', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const { status, clientId } = req.params;
+        const validStatuses = ['pending', 'in_progress', 'completed', 'rejected', 'recovered'];
+        
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status provided' });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(clientId)) {
+            return res.status(400).json({ message: 'Invalid client ID' });
+        }
+
+        const reparations = await Reparation.find({ status })
+            .populate({
+                path: 'depositId',
+                populate: [
+                    {
+                        path: 'vehicleId',
+                        populate: { path: 'clientId' }
+                    },
+                    {
+                        path: 'typeReparationIds'
+                    }
+                ]
+            })
+            .populate('mechanics');
+
+        const filteredReparations = reparations.filter(
+            repair => repair.depositId && 
+                      repair.depositId.vehicleId && 
+                      repair.depositId.vehicleId.clientId && 
+                      repair.depositId.vehicleId.clientId._id.toString() === clientId
+        );
+        
+        res.status(200).json(filteredReparations);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching reparations by status and client', error: error.message });
+    }
+});
 module.exports = router;
