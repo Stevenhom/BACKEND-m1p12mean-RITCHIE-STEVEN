@@ -26,7 +26,23 @@ router.post('/', authMiddleware([3]), async (req, res) => {
 
 router.get('/', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
-        const reparations = await Reparation.find().populate('depositId typeReparationId mechanics');
+        const reparations = await Reparation.find()
+            .populate({
+                path: 'depositId',
+                populate: [
+                    {
+                        path: 'vehicleId',
+                        populate: {
+                            path: 'clientId'
+                        }
+                    },
+                    {
+                        path: 'typeReparationIds'
+                    }
+                ]
+            })
+            .populate('mechanics');
+
         res.status(200).json(reparations);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching reparations', error: error.message });
@@ -248,6 +264,35 @@ router.get('/:id', authMiddleware([1, 2, 3]), async (req, res) => {
         res.status(500).json({ message: 'Error fetching reparation by ID', error: error.message });
     }
 });
+
+router.get('/client/:clientId', authMiddleware([1, 2, 3]), async (req, res) => {
+    try {
+        const { clientId } = req.params;
+
+        // Récupérer uniquement les réparations "in_progress" ou "completed"
+        const clientReparations = await Reparation.find({
+            status: { $in: ['in_progress', 'completed'] }, // Filtrer sur le statut
+        })
+        .populate({
+            path: 'depositId',
+            populate: [
+                { path: 'vehicleId', populate: { path: 'clientId' } }
+            ]
+        })
+        .populate('mechanics');
+
+        // Filtrer pour ne garder que les réparations du client concerné
+        const reparationsForClient = clientReparations.filter(reparation => 
+            reparation.depositId.vehicleId.clientId._id.toString() === clientId
+        );
+
+        res.status(200).json(reparationsForClient);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error fetching reparations for client', error: error.message });
+    }
+});
+
 
 router.get('/status/:status', authMiddleware([1, 2, 3]), async (req, res) => {
     try {
