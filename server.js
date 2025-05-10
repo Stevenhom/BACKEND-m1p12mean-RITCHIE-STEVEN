@@ -29,8 +29,15 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
 
 // Définir une route de test
 app.use('/auth', require('./routes/authRoutes'));
-app.use('/protected', require('./routes/protectedRoutes'));
-
+app.use('/auth', require('./routes/forgotPasswordRoutes'));
+app.use('/auth', require('./routes/resetPasswordRoutes'));
+app.use('/brand', require('./routes/brandRoutes'));
+app.use('/vehicle', require('./routes/vehicleRoutes'));
+app.use('/reparationType', require('./routes/reparationTypeRoutes'));
+app.use('/fleet', require('./routes/fleetRoutes'));
+app.use('/deposit', require('./routes/depositRoutes'));
+app.use('/expense', require('./routes/expenseRoutes'));
+app.use('/reparation', require('./routes/reparationRoutes'));
 // Démarrer le serveur
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port http://localhost:${PORT}`);
